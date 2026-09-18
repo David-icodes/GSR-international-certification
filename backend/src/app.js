@@ -13,16 +13,20 @@ import activityRoutes from "./routes/activity.routes.js";
 
 export function createApp() {
   const app = express();
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "https://www.gsrinternationalcertifications.com",
-    ...(process.env.FRONTEND_URL || "").split(",").map((s) => s.trim()).filter(Boolean)
-  ];
+  const normalizeOrigin = (s) => String(s).trim().replace(/\/+$/, "");
+  const allowedOrigins = new Set(
+    [
+      "http://localhost:3000",
+      "https://gsrinternationalcertifications.com",
+      "https://www.gsrinternationalcertifications.com",
+      ...(process.env.FRONTEND_URL || "").split(",").map((s) => s.trim()).filter(Boolean)
+    ].map(normalizeOrigin)
+  );
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
+    if (origin && allowedOrigins.has(normalizeOrigin(origin))) {
+      res.setHeader("Access-Control-Allow-Origin", normalizeOrigin(origin));
     }
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
