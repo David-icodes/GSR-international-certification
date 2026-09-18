@@ -175,11 +175,11 @@ async function executeRequest<T>(path: string, options: RequestInit, attempt: nu
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, noCache = false): Promise<T> {
   const isGet = !options.method || options.method === "GET";
   const maxAttempts = isGet ? MAX_RETRIES + 1 : 1;
 
-  const cached = isGet ? cacheGet<T>(path) : null;
+  const cached = isGet && !noCache ? cacheGet<T>(path) : null;
   if (cached) return cached;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -412,7 +412,7 @@ export const adminApi = {
     page?: number;
     limit?: number;
     sort?: "asc" | "desc";
-  }) => {
+  }, opts?: { fresh?: boolean }) => {
     const query = new URLSearchParams();
     if (params?.search) query.set("search", params.search);
     if (params?.action) query.set("action", params.action);
@@ -425,7 +425,8 @@ export const adminApi = {
     const qs = query.toString();
     return request<{ logs: ActivityLog[]; pagination: { total: number; page: number; limit: number; pages: number } }>(
       `/activity${qs ? `?${qs}` : ""}`,
-      { headers: authHeaders() }
+      { headers: authHeaders() },
+      opts?.fresh
     );
   },
 

@@ -39,7 +39,7 @@ export default function AdminActivityPage() {
 
   const canDelete = adminRole === "ADMIN";
 
-  async function load(p?: number) {
+  async function load(p?: number, fresh = false) {
     setLoading(true);
     setError("");
     try {
@@ -51,7 +51,7 @@ export default function AdminActivityPage() {
         endDate: endDate || undefined,
         page: p || page,
         limit: 30
-      });
+      }, { fresh });
       setLogs(result.logs);
       setTotalPages(result.pagination.pages);
       setTotal(result.pagination.total);
@@ -79,8 +79,10 @@ export default function AdminActivityPage() {
     setDeletingId(id);
     try {
       await adminApi.deleteActivityLog(id);
+      setLogs((current) => current.filter((log) => log._id !== id));
+      setTotal((current) => Math.max(0, current - 1));
       setMessage("Audit log deleted successfully");
-      await load(page);
+      await load(page, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to delete audit log");
     } finally {
